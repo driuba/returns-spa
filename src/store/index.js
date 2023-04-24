@@ -7,8 +7,11 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
     modules: {
-        oidcStore: vuexOidcCreateStoreModule(oidcSettings, {
-            namespaced: true
-        })
+        oidcStore: vuexOidcCreateStoreModule(
+            oidcSettings,
+            {
+                namespaced: true
+            }
+        )
     }
 });

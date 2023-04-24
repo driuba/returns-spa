@@ -26,11 +26,11 @@ const router = new VueRouter({
             },
             name: 'OidcCallbackError',
             path: '/oidc-callback-error'
-        },
-        {
-            path: '*',
-            redirect: '/'
-        }
+        }//,
+        // {
+        //     path: '*',
+        //     redirect: '/'
+        // }
     ]
 });
 

@@ -1,6 +1,11 @@
 const { defineConfig } = require('@vue/cli-service');
 
 module.exports = defineConfig({
+    devServer: {
+        server: {
+            type: 'https'
+        }
+    },
     pages: {
         app: {
             entry: 'src/main.js',
@@ -15,6 +20,5 @@ module.exports = defineConfig({
             template: 'public/silent-renew-oidc.html'
         }
     },
-    transpileDependencies: ['vuetify'],
-    lintOnSave: false
+    transpileDependencies: ['vuetify']
 });

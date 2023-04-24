@@ -10,8 +10,6 @@ export function oidcAuthorize(store, vuexNamespace) {
                     let authorize;
 
                     if (to.meta && !to.meta.isPublic && to.meta.roles) {
-                        const companyId = to.params.companyId && to.params.companyId.toLowerCase();
-
                         const rolesUser = (store.getters['oidcStore/oidcUser'].role || []).map((role) => role.toLowerCase());
 
                         const rolesPath = to.meta.roles.map((role) => role.toLowerCase());

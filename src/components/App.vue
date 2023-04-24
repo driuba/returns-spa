@@ -1,8 +1,8 @@
 <template>
     <v-app>
-        <NotificationMessage />
+        <NotificationMessage/>
 
-        <NavigationToolbar />
+        <NavigationToolbar/>
 
         <v-main>
             <router-view v-if="hasAccess"/>
@@ -11,10 +11,9 @@
 </template>
 
 <script>
-    import { mapGetters } from 'vuex';
     import NavigationToolbar from '@/components/navigationToolbar';
     import { NotificationMessage } from '@/components/notifications';
-
+    import { mapGetters } from 'vuex';
 
     // noinspection JSAnnotator
     export default {

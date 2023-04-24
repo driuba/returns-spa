@@ -42,6 +42,7 @@
                     </v-btn>
                 </v-list-item-action>
             </v-list-item>
+
             <v-list-item
                 v-else
                 :ripple="false"
@@ -155,9 +156,12 @@
             }
         },
         methods: {
-            ...mapActions('oidcStore', {
-                authenticate: 'authenticateOidc'
-            }),
+            ...mapActions(
+                'oidcStore',
+                {
+                    authenticate: 'authenticateOidc'
+                }
+            ),
             handleClick() {
                 this.collapsed = !this.collapsed;
             },

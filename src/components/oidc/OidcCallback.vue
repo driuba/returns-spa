@@ -9,8 +9,10 @@
     export default {
         name: 'OidcCallback',
         mounted() {
-            this.oidcSignInCallback()
+            this
+                .oidcSignInCallback()
                 .then((redirectPath) => {
+                    // noinspection JSCheckFunctionSignatures
                     this.$router.push(redirectPath);
                 })
                 .catch((error) => {
