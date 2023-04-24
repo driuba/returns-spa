@@ -1,28 +1,39 @@
-import Vue from "vue";
-import VueRouter from "vue-router";
-import HomeView from "../views/HomeView.vue";
+import { oidcAuthorize } from './auth';
+import OidcCallback from '@/components/oidc/OidcCallback';
+import OidcCallbackError from '@/components/oidc/OidcCallbackError';
+import store from '@/store';
+import Vue from 'vue';
+import VueRouter from 'vue-router';
 
 Vue.use(VueRouter);
 
-const routes = [
-  {
-    path: "/",
-    name: "home",
-    component: HomeView,
-  },
-  {
-    path: "/about",
-    name: "about",
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () =>
-      import(/* webpackChunkName: "about" */ "../views/AboutView.vue"),
-  },
-];
-
 const router = new VueRouter({
-  routes,
+    base: process.env.BASE_URL,
+    mode: 'history',
+    routes: [
+        {
+            component: OidcCallback,
+            meta: {
+                isPublic: true
+            },
+            name: 'OidcCallback',
+            path: '/oidc-callback'
+        },
+        {
+            component: OidcCallbackError,
+            meta: {
+                isPublic: true
+            },
+            name: 'OidcCallbackError',
+            path: '/oidc-callback-error'
+        },
+        {
+            path: '*',
+            redirect: '/'
+        }
+    ]
 });
+
+router.beforeEach(oidcAuthorize(store, 'oidcStore'));
 
 export default router;

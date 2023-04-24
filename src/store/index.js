@@ -1,12 +1,14 @@
-import Vue from "vue";
-import Vuex from "vuex";
+import oidcSettings from '@/config/oidc';
+import Vue from 'vue';
+import Vuex from 'vuex';
+import { vuexOidcCreateStoreModule } from 'vuex-oidc';
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
-  state: {},
-  getters: {},
-  mutations: {},
-  actions: {},
-  modules: {},
+    modules: {
+        oidcStore: vuexOidcCreateStoreModule(oidcSettings, {
+            namespaced: true
+        })
+    }
 });
