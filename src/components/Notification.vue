@@ -32,7 +32,7 @@
     import { type as messageType } from '@/enums/message';
 
     export default {
-        name: 'NotificationMessage',
+        name: 'Notification',
         data() {
             return {
                 icon: null,
@@ -74,7 +74,7 @@
 </script>
 
 <style scoped>
-    .message {
-        word-break: break-word;
-    }
+.message {
+    word-break: break-word;
+}
 </style>

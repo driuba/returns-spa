@@ -38,7 +38,12 @@ module.exports = {
                 avoidEscape: false
             }
         ],
-        'vue/multi-word-component-names': 'warn',
+        'vue/multi-word-component-names': [
+            'warn',
+            {
+                ignores: ['Dialog', 'Home', 'Notification']
+            }
+        ],
         'vue/no-unused-components': 'warn',
         'vue/script-indent': [
             'warn',

@@ -71,6 +71,7 @@
 </template>
 
 <script>
+    import role from '@/enums/role';
     import { mapActions, mapGetters } from 'vuex';
     import NavigationToolbarItem from './components/NavigationToolbarItem';
     import NavigationToolbarItemGroup from './components/NavigationToolbarItemGroup';
@@ -93,14 +94,14 @@
                 }
             ),
             companyId() {
-                return this.$route.params.companyId && this.$route.params.companyId.toLowerCase();
+                return this.$route.params.companyId && this.$route.params.companyId;
             },
             navigationItems() {
                 const navigationItems = [
                     {
                         icon: 'home',
                         route: {
-                            name: 'HomePageCompany',
+                            name: 'HomeCompany',
                             params: {
                                 companyId: this.companyId
                             }
@@ -113,7 +114,7 @@
                     {
                         icon: 'home',
                         route: {
-                            name: 'HomePage'
+                            name: 'Home'
                         },
                         show: {
                             keyMissing: 'companyId'
@@ -125,11 +126,12 @@
                         route: {
                             name: 'FeeConfigurations',
                             params: {
-                                companyId: this.companyId
+                                companyId: this.$root.companyId
                             }
                         },
                         show: {
-                            keyRequired: 'companyId'
+                            keyRequired: 'companyId',
+                            roles: [role.ADMIN]
                         },
                         title: 'Fees'
                     }
@@ -137,15 +139,32 @@
 
                 return navigationItems
                     .filter((navigationItem) => {
-                        if (!(this.isAuthenticated || navigationItem.show.isPublic)) {
-                            return false;
-                        } else if (navigationItem.show.keyRequired && !this.isKeyPresent(navigationItem.show.keyRequired)) {
-                            return false;
-                        } else if (navigationItem.show.keyMissing && this.isKeyPresent(navigationItem.show.keyMissing)) {
+                        if (!this.isAuthenticated) {
+                            return navigationItem.show && navigationItem.show.isPublic;
+                        }
+
+                        if (!navigationItem.show) {
+                            return true;
+                        }
+
+                        if (
+                            (
+                                navigationItem.show.keyRequired &&
+                                !this.isKeyPresent(navigationItem.show.keyRequired)
+                            ) ||
+                            (
+                                navigationItem.show.keyMissing &&
+                                this.isKeyPresent(navigationItem.show.keyMissing)
+                            )
+                        ) {
                             return false;
                         }
 
-                        return true;
+                        return (
+                            navigationItem.show.isPublic ||
+                            !navigationItem.show.roles ||
+                            navigationItem.show.roles.some((role) => this.userRoles.has(role))
+                        );
                     })
                     .map((navigationItem) => ({
                         ...navigationItem,
@@ -153,6 +172,11 @@
                             ? NavigationToolbarItemGroup
                             : NavigationToolbarItem
                     }));
+            },
+            userRoles() {
+                const roles = (this.user && this.user.roles) || [];
+
+                return new Set(Array.isArray(roles) ? roles : [roles]);
             }
         },
         methods: {

@@ -9,14 +9,20 @@ export function oidcAuthorize(store, vuexNamespace) {
                 if (hasAccess) {
                     let authorize;
 
-                    if (to.meta && !to.meta.isPublic && to.meta.roles) {
-                        const rolesUser = (store.getters['oidcStore/oidcUser'].role || []).map((role) => role.toLowerCase());
+                    const isAuthenticated = store.getters['oidcStore/oidcIsAuthenticated'];
 
-                        const rolesPath = to.meta.roles.map((role) => role.toLowerCase());
-
-                        authorize = rolesUser.some((roleUser) => rolesPath.includes(roleUser));
-                    } else {
+                    if (!isAuthenticated) {
+                        authorize = to.meta && to.meta.isPublic;
+                    } else if (!to.meta || to.meta.isPublic || !to.meta.roles) {
                         authorize = true;
+                    } else {
+                        const user = store.getters['oidcStore/oidcUser'];
+
+                        let roles = (user && user.roles) || [];
+
+                        roles = new Set(Array.isArray(roles) ? roles : [roles]);
+
+                        authorize = to.meta.roles.some((role) => roles.has(role));
                     }
 
                     if (authorize) {
