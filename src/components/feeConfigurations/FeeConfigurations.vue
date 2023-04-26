@@ -35,12 +35,12 @@
                                 :search-input="dialog.model.CustomerId.searchInput"
                                 @update:search-input="handleCustomerSearch"
                                 item-text="Name"
-                                item-value="CustomerId"
+                                item-value="Id"
                                 label="Customer"
                                 no-filter
                             >
                                 <template #item="{ item }">
-                                    {{ item.CustomerId }} - {{ item.Name }}
+                                    {{ item.Id }} - {{ item.Name }}
                                 </template>
                             </AutocompleteField>
                         </v-col>
@@ -86,6 +86,7 @@
                             />
                         </v-col>
                     </v-row>
+
                     <v-row v-show="!dialog.customerConfiguration">
                         <v-col md="6" sm="12">
                             <NumberField
@@ -244,7 +245,7 @@
             customerNames() {
                 return this.customers.reduce((accumulator, customer) => ({
                     ...accumulator,
-                    [customer.CustomerId]: customer.Name
+                    [customer.Id]: customer.Name
                 }), {});
             },
             feeConfigurationGroupDetails() {
@@ -358,7 +359,7 @@
                             }), {});
 
                         if (Id) {
-                            await this.apiReturns.patch(`feeConfigurations/${Id}`, {
+                            await this.apiReturns.patch(`feeConfigurations(${Id})`, {
                                 Value: model.Value,
                                 ValueMinimum: model.ValueMinimum,
                                 ValueType: model.ValueType
@@ -412,10 +413,11 @@
             async loadCustomers(searchInput, callback) {
                 try {
                     const { data: customers } = await this.apiMock.get(
-                        'customers',
+                        `${this.$root.companyId}/customers`,
                         {
-                            companyId: this.$root.companyId,
-                            search: searchInput
+                            params: {
+                                search: searchInput
+                            }
                         }
                     );
 
@@ -423,7 +425,7 @@
                         callback(
                             customers.map((customer) => ({
                                 ...customer,
-                                CustomerId: customer.CustomerId.toLowerCase()
+                                Id: customer.Id.toLowerCase()
                             }))
                         );
                     }
@@ -452,8 +454,8 @@
                     );
 
                     if (customerIds.size) {
-                        const { data: { value: customers } } = await this.apiMock.post(
-                            'customers/filter',
+                        const { data: customers } = await this.apiMock.post(
+                            `${this.$root.companyId}/customers/filter`,
                             {
                                 CustomerIds: [...customerIds]
                             }
@@ -462,7 +464,7 @@
                         this.customers = this.customers.concat(
                             customers.map((customer) => ({
                                 ...customer,
-                                CustomerId: customer.CustomerId.toLowerCase()
+                                Id: customer.Id.toLowerCase()
                             }))
                         );
                     }

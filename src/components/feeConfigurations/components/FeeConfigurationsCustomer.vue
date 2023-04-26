@@ -17,12 +17,12 @@
                         clearable
                         icon="search"
                         item-text="Name"
-                        item-value="CustomerId"
+                        item-value="Id"
                         label="Customer"
                         no-filter
                     >
                         <template #item="{ item }">
-                            {{ item.CustomerId }} - {{ item.Name }}
+                            {{ item.Id }} - {{ item.Name }}
                         </template>
                     </AutocompleteField>
                 </v-col>
