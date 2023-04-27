@@ -41,7 +41,7 @@ module.exports = {
         'vue/multi-word-component-names': [
             'warn',
             {
-                ignores: ['Dialog', 'Home', 'Notification']
+                ignores: ['Dialog', 'Home', 'Notification', 'Return', 'Returns']
             }
         ],
         'vue/no-unused-components': 'warn',

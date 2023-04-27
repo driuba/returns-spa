@@ -134,6 +134,19 @@
                             roles: [role.ADMIN]
                         },
                         title: 'Fees'
+                    },
+                    {
+                        icon: 'production_quantity_limits',
+                        route: {
+                            name: 'Returns',
+                            params: {
+                                companyId: this.$root.companyId
+                            }
+                        },
+                        show: {
+                            keyRequired: 'companyId'
+                        },
+                        title: 'Returns'
                     }
                 ];
 

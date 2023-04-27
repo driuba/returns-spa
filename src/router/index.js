@@ -2,6 +2,7 @@ import FeeConfigurations from '@/components/feeConfigurations';
 import Home from '@/components/Home';
 import OidcCallback from '@/components/oidc/OidcCallback';
 import OidcCallbackError from '@/components/oidc/OidcCallbackError';
+import { Return, ReturnRegistration, Returns } from '@/components/returns';
 import role from '@/enums/role';
 import store from '@/store';
 import Vue from 'vue';
@@ -47,6 +48,21 @@ const router = new VueRouter({
                 roles: [role.ADMIN]
             },
             path: '/:companyId/feeConfigurations'
+        },
+        {
+            component: Returns,
+            name: 'Returns',
+            path: '/:companyId/returns'
+        },
+        {
+            component: ReturnRegistration,
+            name: 'ReturnRegistration',
+            path: '/:companyId/returns/register/:returnId?'
+        },
+        {
+            component: Return,
+            name: 'Return',
+            path: '/:companyId/returns/:returnId'
         },
         {
             path: '*',

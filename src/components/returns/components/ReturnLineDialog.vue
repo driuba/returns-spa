@@ -1,9 +1,9 @@
 <template>
-    <h1>Error in authentication</h1>
+    <div></div>
 </template>
 
 <script>
     export default {
-        name: 'OidcCallbackError'
+        name: 'ReturnLineDialog'
     };
 </script>

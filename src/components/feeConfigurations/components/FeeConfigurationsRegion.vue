@@ -123,7 +123,7 @@
 </template>
 
 <script>
-    import { DetailViewSection } from '@/components/detailView';
+    import { DetailViewSection } from '@/components/detailViews';
     import { AutocompleteField, SelectField } from '@/components/inputs';
     import { valueTypes } from '@/enums/feeConfiguration';
     import { formatters } from '@/mixins';

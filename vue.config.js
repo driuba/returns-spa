@@ -2,9 +2,7 @@ const { defineConfig } = require('@vue/cli-service');
 
 module.exports = defineConfig({
     devServer: {
-        server: {
-            type: 'https'
-        }
+        server: 'https'
     },
     pages: {
         app: {

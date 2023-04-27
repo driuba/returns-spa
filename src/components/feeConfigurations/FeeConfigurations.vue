@@ -114,12 +114,12 @@
             title="Fees"
         >
             <v-tabs>
-                <template v-for="[index, tab] of tabs.entries()">
+                <template v-for="(tab, index) in tabs">
                     <v-tab :key="index">{{ tab.title }}</v-tab>
                 </template>
 
                 <template v-if="initialized">
-                    <template v-for="[index, tab] of tabs.entries()">
+                    <template v-for="(tab, index) in tabs">
                         <v-tab-item
                             :key="index"
                         >
@@ -145,7 +145,7 @@
 
 <script>
     import { createAxios, type as apiType } from '@/api';
-    import { DetailView } from '@/components/detailView';
+    import { DetailView } from '@/components/detailViews';
     import { Dialog, DialogConfirmation } from '@/components/dialogs';
     import { AutocompleteField, NumberField, PercentageField, SelectField } from '@/components/inputs';
     import { valueTypes } from '@/enums/feeConfiguration';

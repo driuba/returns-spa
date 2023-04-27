@@ -11,16 +11,17 @@
                         <v-spacer></v-spacer>
 
                         <v-toolbar-items>
-                            <template v-for="action, index in actions">
+                            <template v-for="(action, index) in actions">
                                 <v-btn
+                                    v-on="action.handleClick ? { click: action.handleClick } : {}"
                                     v-show="!action.hidden"
                                     :key="index"
                                     :disabled="loading || action.disabled"
                                     :loading="loading"
+                                    :to="action.route"
                                     color="primary"
                                     text
                                     tile
-                                    @click="action.handleClick"
                                 >
                                     {{ action.label }}
                                 </v-btn>
@@ -53,7 +54,17 @@
             actions: {
                 default: () => [],
                 type: Array,
-                validator: (actions) => actions.every((action) => action.label && typeof action.handleClick === 'function')
+                validator: (actions) => actions.every((action) => (
+                    action.label &&
+                    (
+                        typeof action.handleClick === 'function' ||
+                        typeof action.route === 'object'
+                    ) &&
+                    !(
+                        typeof action.handleClick === 'function' &&
+                        typeof action.route === 'object'
+                    )
+                ))
             },
             loading: {
                 default: false,
