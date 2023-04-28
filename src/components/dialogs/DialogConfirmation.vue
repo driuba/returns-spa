@@ -30,7 +30,7 @@
                 type: Boolean
             },
             maxWidth: {
-                default: 290,
+                default: 350,
                 type: [Number, String]
             },
             visible: {

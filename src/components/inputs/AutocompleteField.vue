@@ -42,7 +42,7 @@
                 type: Boolean
             },
             value: {
-                required: true
+                default: null
             }
         },
         methods: {

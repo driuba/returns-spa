@@ -2,10 +2,7 @@ export default {
     optionalNonNegativeNumber(name) {
         return (value) => (
             !value ||
-            (
-                typeof value === 'number' &&
-                value >= 0
-            ) ||
+            +value >= 0 ||
             `${name} must either be empty or non-negative`
         );
     },
@@ -13,9 +10,8 @@ export default {
         return (value) => (
             (
                 value &&
-                typeof value === 'number' &&
-                value >= 0
-            ) ||
+                +value >= 0
+            )||
             `${name} is required and must be non-negative`
         );
     },

@@ -45,8 +45,7 @@
                 <v-col>
                     <v-data-table
                         :headers="table.headers"
-                        :items="tableItems"
-                        :server-items-length="1"
+                        :items="data"
                         :sort-by.sync="table.sortBy"
                         :sort-desc.sync="table.sortDesc"
                         @update:sort-by="handleReload"
@@ -88,7 +87,9 @@
 
                         <template #footer>
                             <v-row>
-                                <v-col align="right">
+                                <v-spacer></v-spacer>
+
+                                <v-col cols="auto">
                                     <v-btn
                                         v-show="!pageLast"
                                         :loading="loading"
@@ -127,6 +128,10 @@
             data: {
                 required: true,
                 type: Array
+            },
+            dataCount: {
+                default: null,
+                type: Number
             },
             feeConfigurationGroups: {
                 required: true,
@@ -203,7 +208,9 @@
         },
         computed: {
             pageLast() {
-                return this.data.length <= this.table.pageSize;
+                return typeof this.dataCount === 'number'
+                    ? this.data.length === this.dataCount
+                    : this.data.length < ((this.table.page + 1) * this.table.pageSize);
             },
             query() {
                 const filters = [
@@ -221,9 +228,10 @@
                 }
 
                 const query = {
+                    $count: true,
                     $filter: filters.join(' and '),
                     $skip: this.table.page * this.table.pageSize,
-                    $top: this.table.pageSize + 1
+                    $top: this.table.pageSize
                 };
 
                 if (this.table.sortBy && this.table.sortBy.length) {
@@ -242,9 +250,6 @@
                 }
 
                 return query;
-            },
-            tableItems() {
-                return this.data.slice(0, this.table.pageSize);
             }
         },
         created() {
@@ -262,15 +267,18 @@
                 );
             },
             handleCustomerSearch(searchInput) {
-                if (searchInput !== this.table.filters.customerId.searchInput) {
-                    this.table.filters.customerId.searchInput = searchInput;
+                clearTimeout(this.table.filters.customerId.searchTimeout);
 
-                    clearTimeout(this.table.filters.customerId.searchTimeout);
+                this.table.filters.customerId.searchTimeout = setTimeout(
+                    () => {
+                        if (searchInput && searchInput.length > 2 && this.table.filters.customerId.searchInput !== searchInput) {
+                            this.table.filters.customerId.searchInput = searchInput;
 
-                    if (searchInput && searchInput.length > 2) {
-                        this.table.filters.customerId.searchTimeout = setTimeout(this.loadCustomers, 500);
-                    }
-                }
+                            this.loadCustomers();
+                        }
+                    },
+                    500
+                );
             },
             handleDelete(feeConfiguration) {
                 this.$emit('delete', feeConfiguration.Id, this.handleReload);
@@ -281,16 +289,23 @@
                 this.$emit('load', this.query);
             },
             handleReload() {
-                this.table.page = 0;
+                clearTimeout(this.table.timeout);
 
-                this.$emit('load', this.query);
+                this.table.timeout = setTimeout(() => {
+                    this.table.page = 0;
+
+                    this.$emit('load', this.query);
+                });
             },
             loadCustomers() {
                 this.table.filters.customerId.loading = true;
 
                 this.$emit(
                     'load:customers',
-                    this.table.filters.customerId.searchInput,
+                    {
+                        parent: true,
+                        search: this.table.filters.customerId.searchInput
+                    },
                     (customers) => {
                         this.table.filters.customerId.loading = false;
 

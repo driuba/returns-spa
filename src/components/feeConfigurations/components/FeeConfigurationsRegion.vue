@@ -37,8 +37,7 @@
                 <v-col>
                     <v-data-table
                         :headers="table.headers"
-                        :items="tableItems"
-                        :server-items-length="1"
+                        :items="data"
                         :sort-by.sync="table.sortBy"
                         :sort-desc.sync="table.sortDesc"
                         @update:sort-by="handleReload"
@@ -100,8 +99,10 @@
                         </template>
 
                         <template #footer>
-                            <v-row>
-                                <v-col align="right">
+                            <v-row >
+                                <v-spacer></v-spacer>
+
+                                <v-col cols="auto">
                                     <v-btn
                                         v-show="!pageLast"
                                         :loading="loading"
@@ -158,6 +159,10 @@
             data: {
                 required: true,
                 type: Array
+            },
+            dataCount: {
+                default: null,
+                type: Number
             },
             feeConfigurationGroups: {
                 required: true,
@@ -245,13 +250,16 @@
                     page: 0,
                     pageSize: 100,
                     sortBy: ['Id'],
-                    sortDesc: [false]
+                    sortDesc: [false],
+                    timeout: null
                 }
             };
         },
         computed: {
             pageLast() {
-                return this.data.length < this.table.pageSize;
+                return typeof this.dataCount === 'number'
+                    ? this.data.length === this.dataCount
+                    : this.data.length < ((this.table.page + 1) * this.table.pageSize);
             },
             query() {
                 const filters = [
@@ -268,9 +276,10 @@
                 }
 
                 const query = {
+                    $count: true,
                     $filter: filters.join(' and '),
                     $skip: this.table.page * this.table.pageSize,
-                    $top: this.table.pageSize + 1
+                    $top: this.table.pageSize
                 };
 
                 if (this.table.sortBy && this.table.sortBy.length) {
@@ -289,9 +298,6 @@
                 }
 
                 return query;
-            },
-            tableItems() {
-                return this.data.slice(0, this.table.pageSize);
             }
         },
         created() {
@@ -313,9 +319,13 @@
                 this.$emit('load', this.query);
             },
             handleReload() {
-                this.table.page = 0;
+                clearTimeout(this.table.timeout);
 
-                this.$emit('load', this.query);
+                this.table.timeout = setTimeout(() => {
+                    this.table.page = 0;
+
+                    this.$emit('load', this.query);
+                });
             }
         }
     };

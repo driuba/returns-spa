@@ -2,6 +2,8 @@
     <v-app>
         <Notification/>
 
+        <NotificationList/>
+
         <NavigationToolbar/>
 
         <v-main>
@@ -11,14 +13,14 @@
 </template>
 
 <script>
-    import NavigationToolbar from '@/components/navigationToolbar';
-    import Notification from '@/components/Notification';
+    import NavigationToolbar from '@/components/navigation';
+    import { Notification, NotificationList } from '@/components/notifications';
     import { mapGetters } from 'vuex';
 
     // noinspection JSAnnotator
     export default {
         name: 'App',
-        components: { NavigationToolbar, Notification },
+        components: { NavigationToolbar, Notification, NotificationList },
         computed: {
             ...mapGetters(
                 'oidcStore',

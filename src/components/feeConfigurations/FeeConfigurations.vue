@@ -93,6 +93,7 @@
                                 v-show="dialog.model.ValueType.value === valueTypes.PERCENT.value"
                                 v-model="dialog.model.ValueMinimum.value"
                                 :rules="dialog.model.ValueMinimum.rules"
+                                clearable
                                 label="Minimum value, €"
                             />
                         </v-col>
@@ -125,6 +126,7 @@
                         >
                             <component
                                 :data="tab.data"
+                                :dataCount="tab.dataCount"
                                 :feeConfigurationGroups="feeConfigurationGroups"
                                 :regions="regions"
                                 :is="tab.component"
@@ -230,12 +232,14 @@
                         component: FeeConfigurationsRegion,
                         customerConfiguration: false,
                         data: [],
+                        dataCount: null,
                         title: 'Countries and regions'
                     },
                     {
                         component: FeeConfigurationsCustomer,
                         customerConfiguration: true,
                         data: [],
+                        dataCount: null,
                         title: 'Customers'
                     }
                 ]
@@ -275,18 +279,20 @@
         },
         methods: {
             handleCustomerSearch(searchInput) {
-                if (searchInput !== this.dialog.model.CustomerId.searchInput) {
-                    this.dialog.model.CustomerId.searchInput = searchInput;
+                clearTimeout(this.dialog.model.CustomerId.searchTimeout);
 
-                    clearTimeout(this.dialog.model.CustomerId.searchTimeout);
-
-                    if (searchInput && searchInput.length > 2) {
-                        this.dialog.model.CustomerId.searchTimeout = setTimeout(
-                            () => {
+                if (searchInput && searchInput.length > 2) {
+                    this.dialog.model.CustomerId.searchTimeout = setTimeout(
+                        () => {
+                            if (searchInput && searchInput.length > 2 && this.dialog.model.CustomerId.searchInput !== searchInput) {
+                                this.dialog.model.CustomerId.searchInput = searchInput;
                                 this.dialog.model.CustomerId.loading = true;
 
                                 this.loadCustomers(
-                                    searchInput,
+                                    {
+                                        parent: true,
+                                        search: searchInput
+                                    },
                                     (customers) => {
                                         if (customers) {
                                             this.dialog.model.CustomerId.items = customers;
@@ -295,10 +301,10 @@
                                         this.dialog.model.CustomerId.loading = false;
                                     }
                                 );
-                            },
-                            500
-                        );
-                    }
+                            }
+                        },
+                        500
+                    );
                 }
             },
             handleDelete(id, callback) {
@@ -313,7 +319,7 @@
                 try {
                     this.loading = true;
 
-                    await this.apiReturns.delete(`feeConfigurations/${this.feeConfigurationIdToDelete}`);
+                    await this.apiReturns.delete(`feeConfigurations(${this.feeConfigurationIdToDelete})`);
 
                     if (typeof this.callback === 'function') {
                         this.callback();
@@ -410,15 +416,11 @@
                     this.loading = false;
                 }
             },
-            async loadCustomers(searchInput, callback) {
+            async loadCustomers(params, callback) {
                 try {
                     const { data: customers } = await this.apiMock.get(
                         `${this.$root.companyId}/customers`,
-                        {
-                            params: {
-                                search: searchInput
-                            }
-                        }
+                        { params }
                     );
 
                     if (typeof callback === 'function') {
@@ -441,7 +443,7 @@
                 try {
                     this.loading = true;
 
-                    const { data: { value: feeConfigurations } } = await this.apiReturns.get(
+                    const { data: { '@odata.count': count, value: feeConfigurations } } = await this.apiReturns.get(
                         'feeConfigurations',
                         { params: query }
                     );
@@ -482,6 +484,8 @@
                     } else {
                         this.tabs[index].data = page;
                     }
+
+                    this.tabs[index].dataCount = typeof count === 'number' ? count : null;
                 } catch (error) {
                     this.$root.handleError(error);
                 } finally {

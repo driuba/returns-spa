@@ -1,21 +1,29 @@
 <template>
-    <v-select
+    <v-text-field
         v-bind="$attrs"
+        v-on="$listeners"
         :class="readonly ? 'readonly-input' : ''"
         :clearable="clearable && !readonly"
         :color="readonly ? 'rgba(0,0,0,0.54)' : 'primary'"
         :prepend-icon="icon"
         :readonly="readonly"
         :value="value"
-        @change="handleChange"
         @click:clear="handleChange($event.target.value)"
         ref="input"
-    ></v-select>
+    >
+        <template v-for="(_, nameScoped) of $scopedSlots" #[nameScoped]="propsScoped">
+            <slot v-bind="propsScoped" :name="nameScoped"></slot>
+        </template>
+
+        <template v-for="(_, name) of $slots" #[name]>
+            <slot :name="name"></slot>
+        </template>
+    </v-text-field>
 </template>
 
 <script>
     export default {
-        name: 'SelectField',
+        name: 'TextField',
         model: {
             event: 'change',
             prop: 'value'
@@ -29,12 +37,13 @@
                 default: null,
                 type: String
             },
-            readonly: {
+            readonly:{
                 default: false,
                 type: Boolean
             },
             value: {
-                default: null
+                default: '',
+                type: String
             }
         },
         methods: {

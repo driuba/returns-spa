@@ -1,5 +1,15 @@
 <template>
     <div>
+        <DialogConfirmation
+            :visible="dialogConfirmation.visible"
+            @cancel="dialogConfirmation.visible = false"
+            @confirm="dialogConfirmation.handler()"
+        >
+            Are you sure you want to go back to a previous step?
+            Your current progress will be lost.
+
+        </DialogConfirmation>
+
         <DetailView
             :loading="!!loading"
             title="Register return"
@@ -48,13 +58,15 @@
                     <v-tab-item>
                         <RegistrationInvoiceLineTable
                             v-model="model.invoiceLines"
-                            :invoiceLines="invoiceLineFilter.items"
+                            :invoiceLines="invoiceLines"
                             :loading="!!loading"
                             :loadingProducts="productSearch.loading"
                             :products="productSearch.items"
-                            :returnAvailability="model.productType === productType.NEW.value ? returnAvailability.value : null"
-                            @filter:invoiceLinea="handleInvoiceLinesFilter"
-                            @search:producta="handleProductsSearch"
+                            :productTypeSelected="model.productType"
+                            :returnAvailability="returnAvailability.value"
+                            @load:invoiceLinea="handleInvoiceLinesLoad"
+                            @load:products="handleProductsLoad"
+                            ref="invoiceLinesTable"
                         />
                     </v-tab-item>
 
@@ -73,6 +85,7 @@
 <script>
     import { createAxios, type as apiType } from '@/api';
     import { DetailView } from '@/components/detailViews';
+    import { DialogConfirmation } from '@/components/dialogs';
     import { productType } from '@/enums/return';
     import { DateTime } from 'luxon';
     import {
@@ -86,6 +99,7 @@
         name: 'ReturnRegistration',
         components: {
             DetailView,
+            DialogConfirmation,
             RegistrationDeliveryPointSelection,
             RegistrationInvoiceLineTable,
             RegistrationProductTypeSelection,
@@ -101,33 +115,29 @@
                     loading: false,
                     timeout: null
                 },
-                invoiceLineFilter: {
-                    from: null,
-                    items: [],
-                    productId: null,
-                    search: null,
-                    to: null
+                dialogConfirmation: {
+                    handler: () => {},
+                    visible: false
                 },
+                invoiceLines: [],
                 loading: 0,
                 model: {
                     deliveryPointId: null,
+                    estimated: false,
                     invoiceLines: [],
                     productType: null,
                     returnLines: []
                 },
                 productSearch: {
-                    input: null,
                     items: [],
-                    loading: false,
-                    timeout: null
+                    loading: false
                 },
                 returnAvailability: {
                     deliveryPointId: null,
-                    timeout: null,
                     value: null
                 },
-                tabDisplayed: null,
-                tabSelected: null
+                tabDisplayed: 0,
+                tabSelected: 0
             };
         },
         computed: {
@@ -154,48 +164,59 @@
             }
         },
         methods: {
-            handleDeliveryPointIdUpdate(deliveryPointId) {
-                clearTimeout(this.returnAvailability.timeout);
+            async handleDeliveryPointIdUpdate(deliveryPointId) {
+                if (deliveryPointId && this.returnAvailability.deliveryPointId !== deliveryPointId) {
+                    this.returnAvailability.deliveryPointId = deliveryPointId;
 
-                if (deliveryPointId) {
-                    this.returnAvailability.timeout = setTimeout(
-                        () => this.loadAvailability(deliveryPointId),
-                        500
-                    );
+                    await this.loadAvailability(deliveryPointId);
                 }
             },
-            handleInvoiceLinesFilter() {},
-            handleProductsSearch() {},
+            handleInvoiceLinesLoad(filter) {
+
+            },
+            handleProductsLoad(searchInput) {
+            },
             handleDeliveryPointsSearch(input) {
-                if (input !== this.deliveryPointSearch.input) {
-                    this.deliveryPointSearch.input = input;
+                clearTimeout(this.deliveryPointSearch.timeout);
 
-                    clearTimeout(this.deliveryPointSearch.timeout);
+                this.deliveryPointSearch.timeout = setTimeout(
+                    async () => {
+                        if (input && input.length > 2 && this.deliveryPointSearch.input !== input) {
+                            this.deliveryPointSearch.input = input;
+                            this.deliveryPointSearch.loading = true;
 
-                    if (input && input.length > 2) {
-                        this.deliveryPointSearch.timeout = setTimeout(
-                            async () => {
-                                this.deliveryPointSearch.loading = true;
+                            const deliveryPoints = await this.loadDeliveryPoints(input);
 
-                                const deliveryPoints = await this.loadDeliveryPoints(input);
+                            if (deliveryPoints) {
+                                this.deliveryPointSearch.items = deliveryPoints;
+                            }
 
-                                if (deliveryPoints) {
-                                    this.deliveryPointSearch.items = deliveryPoints;
-                                }
-
-                                this.deliveryPointSearch.loading = false;
-                            },
-                            500
-                        );
-                    }
-                }
+                            this.deliveryPointSearch.loading = false;
+                        }
+                    },
+                    500
+                );
             },
             async handleTabChange(tab) {
-                if (this.tabDisplayed > tab) {
+                if (this.tabDisplayed > 1 && this.tabDisplayed > tab) {
                     await this.$nextTick();
 
                     this.tabSelected = this.tabDisplayed;
+
+                    this.dialogConfirmation.handler = () => {
+                        this.tabDisplayed = this.tabSelected = tab;
+
+                        this.dialogConfirmation.visible = false;
+                    };
+
+                    this.dialogConfirmation.visible = true;
                 } else {
+                    if (tab === 2) {
+                        if (this.$refs.invoiceLinesTable) {
+                            await this.$refs.invoiceLinesTable.reset();
+                        }
+                    }
+
                     this.tabDisplayed = tab;
                     this.tabSelected = tab;
                 }
@@ -204,24 +225,20 @@
                 try {
                     this.loading++;
 
-                    if (this.returnAvailability.deliveryPointId !== deliveryPointId) {
-                        const { data: { Days } } = await this.apiReturns.get(
-                            `returnAvailabilities/filter(deliveryPointId='${deliveryPointId}')`,
-                            {
-                                params: {
-                                    $select: 'Days'
-                                }
+                    const { data: { Days } } = await this.apiReturns.get(
+                        `returnAvailabilities/filter(deliveryPointId='${deliveryPointId}')`,
+                        {
+                            params: {
+                                $select: 'Days'
                             }
-                        );
+                        }
+                    );
 
-                        this.returnAvailability.deliveryPointId = deliveryPointId;
-
-                        this.returnAvailability.value = DateTime
-                            .now()
-                            .plus({ days: -Days })
-                            .startOf('day')
-                            .toJSON();
-                    }
+                    this.returnAvailability.value = DateTime
+                        .now()
+                        .startOf('days')
+                        .plus({ days: -Days })
+                        .toISODate();
                 } catch (error) {
                     this.$root.handleError(error);
                 } finally {
@@ -254,7 +271,19 @@
                 try {
                     this.loading++;
 
-                    // TODO
+                    const { data: { DeliveryPointId, Lines } } = await this.apiReturns.get(
+                        `returns(${this.returnId})`,
+                        {
+                            params: {
+                                $expand: 'Lines($select=ProductType)',
+                                $select: 'DeliveryPointId,Lines'
+                            }
+                        }
+                    );
+
+                    this.model.deliveryPointId = DeliveryPointId || null;
+
+                // TODO
                 } catch (error) {
                     if (error.response && error.response.status === 404) {
                         this.$root.handleError(new Error(`Return ${this.returnId} was not found.`));

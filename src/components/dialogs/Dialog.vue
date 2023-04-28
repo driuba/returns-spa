@@ -16,7 +16,7 @@
             <v-card-actions>
                 <v-spacer></v-spacer>
 
-                <template v-for="action, index in actions">
+                <template v-for="(action, index) in actions">
                     <v-btn
                         :key="index"
                         :loading="loading"

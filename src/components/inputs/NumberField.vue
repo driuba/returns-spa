@@ -54,7 +54,7 @@
             }
         },
         created() {
-            if (this.value || this.value === 0) {
+            if (typeof this.value === 'number') {
                 this.number = this.value.toString();
             } else {
                 this.number = null;
@@ -67,16 +67,18 @@
             handleClear() {
                 this.$emit('change', null);
             },
-            handleInput(value) {
+            async handleInput(value) {
                 const numberPrevious = this.number;
 
                 this.number = value || '';
 
-                this.$nextTick(() => {
-                    const result = (value || '').replace(',', '.').match(/^-?(\d+\.?\d*)?$/g);
+                await this.$nextTick();
 
-                    this.number = result ? result[0] : numberPrevious;
-                });
+                const result = (value || '')
+                    .replace(',', '.')
+                    .match(/^-?(\d+\.?\d*)?$/g);
+
+                this.number = result ? result[0] : numberPrevious;
             },
             validate() {
                 return this.$refs.input.validate();
