@@ -94,17 +94,14 @@
                 }
             ),
             companyId() {
-                return this.$route.params.companyId && this.$route.params.companyId;
+                return this.$root.companyId;
             },
             navigationItems() {
                 const navigationItems = [
                     {
                         icon: 'home',
                         route: {
-                            name: 'HomeCompany',
-                            params: {
-                                companyId: this.companyId
-                            }
+                            name: 'HomeCompany'
                         },
                         show: {
                             keyRequired: 'companyId'
@@ -124,10 +121,7 @@
                     {
                         icon: 'price_check',
                         route: {
-                            name: 'FeeConfigurations',
-                            params: {
-                                companyId: this.$root.companyId
-                            }
+                            name: 'FeeConfigurations'
                         },
                         show: {
                             keyRequired: 'companyId',
@@ -138,10 +132,7 @@
                     {
                         icon: 'production_quantity_limits',
                         route: {
-                            name: 'Returns',
-                            params: {
-                                companyId: this.$root.companyId
-                            }
+                            name: 'Returns'
                         },
                         show: {
                             keyRequired: 'companyId'

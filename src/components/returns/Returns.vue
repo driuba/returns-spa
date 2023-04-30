@@ -30,12 +30,7 @@
                     },
                     {
                         label: 'Create',
-                        route: {
-                            name: 'ReturnRegistration',
-                            params: {
-                                companyId: this.$root.companyId
-                            }
-                        }
+                        route: { name: 'ReturnRegistration' }
                     }
                 ],
                 apiMock: null,

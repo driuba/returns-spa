@@ -30,7 +30,7 @@
                     Invoice lines
                 </v-tab>
 
-                <v-tab :disabled="!model.returnLines.length">
+                <v-tab :disabled="!model.invoiceLines.length">
                     Return lines
                 </v-tab>
 
@@ -74,7 +74,14 @@
                     <v-tab-item>
                         <RegistrationReturnLineTable
                             v-model="model.returnLines"
+                            :estimated="model.estimated"
+                            :feeConfigurationGroups="feeConfigurationGroups"
+                            :labelCount.sync="model.labelCount"
                             :loading="!!loading"
+                            :returnEstimated="returnEstimated"
+                            @estimate="handleEstimate"
+                            @register="handleRegister"
+                            @update:returnLines="model.estimated = false"
                         />
                     </v-tab-item>
                 </v-tabs-items>
@@ -120,12 +127,14 @@
                     handler: () => {},
                     visible: false
                 },
+                feeConfigurationGroups: [],
                 invoiceLines: [],
                 loading: 0,
                 model: {
                     deliveryPointId: null,
                     estimated: false,
                     invoiceLines: [],
+                    labelCount: 0,
                     productType: null,
                     returnLines: []
                 },
@@ -137,6 +146,7 @@
                     deliveryPointId: null,
                     value: null
                 },
+                returnEstimated: null,
                 tabDisplayed: 0,
                 tabSelected: 0
             };
@@ -156,6 +166,8 @@
 
             this.apiReturns = createAxios(apiType.RETURNS, this.$root.companyId);
 
+            await this.loadFeeConfigurationGroups();
+
             if (this.returnId) {
                 await this.loadReturn();
             }
@@ -165,11 +177,67 @@
             }
         },
         methods: {
+            handleDeliveryPointsSearch(input) {
+                clearTimeout(this.deliveryPointSearch.timeout);
+
+                this.deliveryPointSearch.timeout = setTimeout(
+                    async () => {
+                        if (input && input.length > 2 && this.deliveryPointSearch.input !== input) {
+                            this.deliveryPointSearch.input = input;
+                            this.deliveryPointSearch.loading = true;
+
+                            const deliveryPoints = await this.loadDeliveryPoints(input);
+
+                            if (deliveryPoints) {
+                                this.deliveryPointSearch.items = deliveryPoints;
+                            }
+
+                            this.deliveryPointSearch.loading = false;
+                        }
+                    },
+                    500
+                );
+            },
             async handleDeliveryPointIdUpdate(deliveryPointId) {
                 if (deliveryPointId && this.returnAvailability.deliveryPointId !== deliveryPointId) {
                     this.returnAvailability.deliveryPointId = deliveryPointId;
 
                     await this.loadAvailability(deliveryPointId);
+                }
+            },
+            async handleEstimate() {
+                try {
+                    this.loading++;
+
+                    const { data: returnEstimated } = await this.apiReturns.post(
+                        'returns/estimate',
+                        {
+                            DeliveryPointId: this.model.deliveryPointId,
+                            LabelCount: this.model.labelCount,
+                            Lines: this.model.returnLines.map((returnLine) => ({
+                                FeeConfigurationGroupIdDamagePackage: returnLine.FeeConfigurationGroupIdDamagePackage,
+                                FeeConfigurationGroupIdDamageProduct: returnLine.FeeConfigurationGroupIdDamageProduct,
+                                InvoiceNumber: returnLine.InvoiceNumber,
+                                Note: returnLine.Note,
+                                ProductId: returnLine.ProductId,
+                                ProductType: returnLine.ProductType,
+                                Quantity: returnLine.Quantity,
+                                Reference: returnLine.Reference,
+                                SerialNumber: returnLine.SerialNumber
+                            }))
+                        }
+                    );
+
+                    this.returnEstimated = returnEstimated;
+
+                    this.model.estimated = (
+                        !returnEstimated.Messages.length &&
+                        returnEstimated.Lines.every((line) => !line.Messages.length)
+                    );
+                } catch (error) {
+                    this.$root.handleError(error);
+                } finally {
+                    this.loading--;
                 }
             },
             async handleInvoiceLinesLoad(request) {
@@ -208,26 +276,40 @@
                     this.productSearch.loading = false;
                 }
             },
-            handleDeliveryPointsSearch(input) {
-                clearTimeout(this.deliveryPointSearch.timeout);
+            async handleRegister() {
+                try {
+                    this.loading++;
 
-                this.deliveryPointSearch.timeout = setTimeout(
-                    async () => {
-                        if (input && input.length > 2 && this.deliveryPointSearch.input !== input) {
-                            this.deliveryPointSearch.input = input;
-                            this.deliveryPointSearch.loading = true;
-
-                            const deliveryPoints = await this.loadDeliveryPoints(input);
-
-                            if (deliveryPoints) {
-                                this.deliveryPointSearch.items = deliveryPoints;
-                            }
-
-                            this.deliveryPointSearch.loading = false;
+                    const { data: { Id } } = await this.apiReturns.post(
+                        'returns',
+                        {
+                            DeliveryPointId: this.model.deliveryPointId,
+                            LabelCount: this.model.labelCount,
+                            Lines: this.model.returnLines.map((returnLine) => ({
+                                FeeConfigurationGroupIdDamagePackage: returnLine.FeeConfigurationGroupIdDamagePackage,
+                                FeeConfigurationGroupIdDamageProduct: returnLine.FeeConfigurationGroupIdDamageProduct,
+                                InvoiceNumber: returnLine.InvoiceNumber,
+                                Note: returnLine.Note,
+                                ProductId: returnLine.ProductId,
+                                ProductType: returnLine.ProductType,
+                                Quantity: returnLine.Quantity,
+                                Reference: returnLine.Reference,
+                                SerialNumber: returnLine.SerialNumber
+                            }))
                         }
-                    },
-                    500
-                );
+                    );
+
+                    await this.$router.push({
+                        name: 'Return',
+                        params: {
+                            returnId: Id
+                        }
+                    });
+                } catch (error) {
+                    this.$root.handleError(error);
+                } finally {
+                    this.loading--;
+                }
             },
             async handleTabChange(tab) {
                 if (this.tabDisplayed > 1 && this.tabDisplayed > tab) {
@@ -236,6 +318,16 @@
                     this.tabSelected = this.tabDisplayed;
 
                     this.dialogConfirmation.handler = () => {
+                        if (this.tabDisplayed === 3) {
+                            this.model.estimated = false;
+                            this.model.returnLines = [];
+                            this.returnEstimated = null;
+                        }
+
+                        if (this.tabDisplayed >= 2 && tab < 2) {
+                            this.model.invoiceLines = [];
+                        }
+
                         this.tabDisplayed = this.tabSelected = tab;
 
                         this.dialogConfirmation.visible = false;
@@ -247,6 +339,27 @@
                         if (this.$refs.invoiceLinesTable) {
                             await this.$refs.invoiceLinesTable.reset();
                         }
+                    } else if (tab === 3) {
+                        this.model.returnLines = this.model.invoiceLines.map((invoiceLine) => ({
+                            FeeConfigurationGroupIdDamagePackage: null,
+                            FeeConfigurationGroupIdDamageProduct: null,
+                            InvoiceDate: invoiceLine.InvoiceDate,
+                            InvoiceLineId: invoiceLine.Id,
+                            InvoiceNumber: invoiceLine.InvoiceNumber,
+                            Note: null,
+                            PriceUnit: invoiceLine.PriceUnit,
+                            ProductId: invoiceLine.ProductId,
+                            ProductName: invoiceLine.ProductName,
+                            Quantity: this.model.productType === productType.SERVICED.value
+                                ? 1
+                                : invoiceLine.QuantityInvoiced - invoiceLine.QuantityReturned,
+                            QuantityAvailable: this.model.productType === productType.SERVICED.value
+                                ? 1
+                                : invoiceLine.QuantityInvoiced - invoiceLine.QuantityReturned,
+                            Reference: crypto.randomUUID(),
+                            ProductType: this.model.productType,
+                            SerialNumber: invoiceLine.SerialNumber
+                        }));
                     }
 
                     this.tabDisplayed = tab;
@@ -299,6 +412,26 @@
                     return null;
                 }
             },
+            async loadFeeConfigurationGroups() {
+                try {
+                    this.loading++;
+
+                    const { data: { value: feeConfigurationGroups } } = await this.apiReturns.get(
+                        'feeConfigurationGroups',
+                        {
+                            params: {
+                                $select: 'Description,Id,Name,Order,Type'
+                            }
+                        }
+                    );
+
+                    this.feeConfigurationGroups = feeConfigurationGroups;
+                } catch (error) {
+                    this.$root.handleError(error);
+                } finally {
+                    this.loading--;
+                }
+            },
             async loadReturn() {
                 try {
                     this.loading++;
@@ -316,12 +449,7 @@
                     if (Lines.some(({ ProductType }) => ProductType === productType.UNDER_WARRANTY.value)) {
                         this.$root.handleError(new Error('Only a single serviced product may be registered within a single return document.'));
 
-                        await this.$router.replace({
-                            name: 'Returns',
-                            params: {
-                                companyId: this.$root.companyId
-                            }
-                        });
+                        await this.$router.replace({ name: 'Returns' });
                     }
 
                     this.model.deliveryPointId = DeliveryPointId || null;
@@ -329,12 +457,7 @@
                     if (error.response && error.response.status === 404) {
                         this.$root.handleError(new Error(`Return ${this.returnId} was not found.`));
 
-                        await this.$router.replace({
-                            name: 'Returns',
-                            params: {
-                                companyId: this.$root.companyId
-                            }
-                        });
+                        await this.$router.replace({ name: 'Returns' });
                     } else {
                         this.$root.handleError(error);
                     }

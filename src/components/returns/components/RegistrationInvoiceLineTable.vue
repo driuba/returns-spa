@@ -35,6 +35,7 @@
                         :loading="loadingProducts"
                         @change="handleReload"
                         @update:search-input="handleFilterProductIdSearch"
+                        clearable
                         icon="search"
                         item-text="Name"
                         item-value="Id"
@@ -53,6 +54,7 @@
                     <TextField
                         :value="filter.search"
                         @input="handleFilterSearchInput"
+                        clearable
                         icon="search"
                         label="Search"
                     ></TextField>
@@ -76,7 +78,6 @@
                         @update:page="load"
                         disable-pagination
                         disable-sort
-                        item-class=""
                         show-select
                     >
                         <template #header.data-table-select>
@@ -97,23 +98,28 @@
 
                             <v-tooltip v-else right>
                                 <template #activator="{ on }">
-                                    <v-icon v-on="on" color="error">error_outline</v-icon>
+                                    <v-icon
+                                        v-on="on"
+                                        color="error"
+                                    >
+                                        error_outline
+                                    </v-icon>
                                 </template>
 
                                 <template>
                                     <div v-if="item.ByOrderOnly">Product was purchased by order and cannot be returned</div>
-                                    <div v-if="item.Servicable">Product must be serviced and cannot be returned under warranty</div>
+                                    <div v-if="item.Serviceable">Product must be serviced and cannot be returned under warranty</div>
                                     <div v-if="item.quantityAvailable <= 0">Invoice product is not available for return</div>
                                 </template>
                             </v-tooltip>
                         </template>
 
-                        <template #item.InvoiceNumber="{ item: { InvoiceNumber } }">
-                            <span class="text-uppercase">{{ InvoiceNumber }}</span>
-                        </template>
-
                         <template #item.InvoiceDate="{ item: { InvoiceDate } }">
                             {{ InvoiceDate | dateTimeFormat('yyyy-MM-dd') }}
+                        </template>
+
+                        <template #item.InvoiceNumber="{ item: { InvoiceNumber } }">
+                            <span class="text-uppercase">{{ InvoiceNumber }}</span>
                         </template>
 
                         <template #item.ProductId="{ item: { ProductId } }">
@@ -125,7 +131,7 @@
                         </template>
 
                         <template #item.ProductName="{ item: { ProductName } }">
-                            <td class="text-center text-truncate">
+                            <td class="text-center">
                                 <v-tooltip top>
                                     <template #activator="{ on }">
                                         <span
@@ -205,16 +211,6 @@
         },
         data() {
             return {
-                actions: [
-                    {
-                        handleClick: this.load,
-                        label: 'Refresh'
-                    },
-                    {
-                        handleClick: this.handleInvoiceLinesSelectedClear,
-                        label: 'Clear selection'
-                    }
-                ],
                 filter: {
                     from: null,
                     productId: null,
@@ -228,13 +224,13 @@
                     headers: [
                         {
                             align: 'center',
-                            text: 'Invoice number',
-                            value: 'InvoiceNumber'
+                            text: 'Invoice date',
+                            value: 'InvoiceDate'
                         },
                         {
                             align: 'center',
-                            text: 'Invoice date',
-                            value: 'InvoiceDate'
+                            text: 'Invoice number',
+                            value: 'InvoiceNumber'
                         },
                         {
                             align: 'center',
@@ -269,6 +265,19 @@
             };
         },
         computed: {
+            actions() {
+                return [
+                    {
+                        handleClick: this.load,
+                        label: 'Refresh'
+                    },
+                    {
+                        disabled: !this.invoiceLinesSelected.length,
+                        handleClick: this.handleInvoiceLinesSelectedClear,
+                        label: 'Clear selection'
+                    }
+                ];
+            },
             invoiceLineIdsSelected() {
                 return new Set(
                     this.invoiceLinesSelected.map(({ Id }) => Id)
@@ -426,7 +435,7 @@
 </script>
 
 <style lang="scss" scoped>
-    td.text-truncate {
+    td {
         max-width: 0;
 
         .text-truncate {

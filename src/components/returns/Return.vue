@@ -33,10 +33,7 @@
             async load() {
                 const redirect = async () => {
                     await this.$router.replace({
-                        name: 'Returns',
-                        params: {
-                            companyId: this.$root.companyId
-                        }
+                        name: 'Returns'
                     });
                 };
 

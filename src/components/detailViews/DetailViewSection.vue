@@ -3,21 +3,21 @@
         <v-row v-show="title || actions.length" no-gutters>
             <v-col>
                 <v-toolbar color="secondary" dark dense flat>
-                    <v-toolbar-title class="text-body-1">{{ title }}</v-toolbar-title>
-
-                    <v-spacer></v-spacer>
+                    <v-toolbar-title class="text-body-1 toolbar-title">
+                        <slot name="title">{{ title }}</slot>
+                    </v-toolbar-title>
 
                     <v-toolbar-items class="py-2">
                         <template v-for="(action, index) in actions">
                             <v-btn
                                 v-on="action.handleClick ? { click: action.handleClick } : {}"
                                 v-show="!action.hidden"
+                                :color="action.color || 'primary'"
                                 :disabled="loading || action.disabled"
                                 :key="index"
                                 :loading="loading"
                                 :to="action.route"
                                 class="mx-2"
-                                color="primary"
                                 small
                             >
                                 {{ action.label }}
@@ -68,3 +68,9 @@
         }
     };
 </script>
+
+<style lang="scss">
+    .toolbar-title {
+        width: 100%;
+    }
+</style>
