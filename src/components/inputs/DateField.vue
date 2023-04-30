@@ -73,6 +73,10 @@
                 default: false,
                 type: Boolean
             },
+            required: {
+                default: false,
+                type: Boolean
+            },
             rules: {
                 default: () => [],
                 type: Array
@@ -97,13 +101,17 @@
             }
         },
         methods: {
-            handleChange(value) {
-                this.$emit(
-                    'change',
+            async handleChange(value) {
+                const date = (
+                    (value || null) &&
                     DateTime
                         .fromISO(value)
                         .toISODate()
                 );
+
+                if (!this.required || date) {
+                    this.$emit('change', date);
+                }
             },
             handleClose() {
                 this.open = false;

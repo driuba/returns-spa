@@ -20,8 +20,8 @@
                         no-filter
                         return-object
                     >
-                        <template #item="{ item }">
-                            {{ item.Id }} - {{ item.Name }}
+                        <template #item="{ item: { Id, Name } }">
+                            {{ Id }} - {{ Name }}
                         </template>
                     </AutocompleteField>
                 </v-col>

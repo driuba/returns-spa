@@ -13,12 +13,12 @@
                 .oidcSignInCallback()
                 .then((redirectPath) => {
                     // noinspection JSCheckFunctionSignatures
-                    this.$router.push(redirectPath);
+                    return this.$router.push(redirectPath);
                 })
                 .catch((error) => {
                     console.error(error);
 
-                    this.$router.push('/oidc-callback-error');
+                    return this.$router.push('/oidc-callback-error');
                 });
         },
         methods: {

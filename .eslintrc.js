@@ -52,6 +52,12 @@ module.exports = {
                 baseIndent: 1,
                 switchCase: 1
             }
+        ],
+        'vue/valid-v-slot': [
+            'error',
+            {
+                allowModifiers: true
+            }
         ]
     }
 };

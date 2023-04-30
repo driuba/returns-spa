@@ -21,8 +21,8 @@
                         label="Customer"
                         no-filter
                     >
-                        <template #item="{ item }">
-                            {{ item.Id }} - {{ item.Name }}
+                        <template #item="{ item: { Id, Name } }">
+                            {{ Id }} - {{ Name }}
                         </template>
                     </AutocompleteField>
                 </v-col>
@@ -86,22 +86,24 @@
                         </template>
 
                         <template #footer>
-                            <v-row>
-                                <v-spacer></v-spacer>
+                            <v-container class="pa-0" fluid>
+                                <v-row>
+                                    <v-spacer></v-spacer>
 
-                                <v-col cols="auto">
-                                    <v-btn
-                                        v-show="!pageLast"
-                                        :loading="loading"
-                                        @click="handleNextPage"
-                                        color="primary"
-                                        text
-                                        tile
-                                    >
-                                        Load more
-                                    </v-btn>
-                                </v-col>
-                            </v-row>
+                                    <v-col cols="auto">
+                                        <v-btn
+                                            v-show="!pageLast"
+                                            :loading="loading"
+                                            @click="handleNextPage"
+                                            color="primary"
+                                            text
+                                            tile
+                                        >
+                                            Load more
+                                        </v-btn>
+                                    </v-col>
+                                </v-row>
+                            </v-container>
                         </template>
                     </v-data-table>
                 </v-col>

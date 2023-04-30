@@ -58,13 +58,14 @@
                     <v-tab-item>
                         <RegistrationInvoiceLineTable
                             v-model="model.invoiceLines"
+                            :deliveryPointIdSelected="model.deliveryPointId"
                             :invoiceLines="invoiceLines"
                             :loading="!!loading"
                             :loadingProducts="productSearch.loading"
                             :products="productSearch.items"
                             :productTypeSelected="model.productType"
                             :returnAvailability="returnAvailability.value"
-                            @load:invoiceLinea="handleInvoiceLinesLoad"
+                            @load:invoiceLines="handleInvoiceLinesLoad"
                             @load:products="handleProductsLoad"
                             ref="invoiceLinesTable"
                         />
@@ -171,10 +172,41 @@
                     await this.loadAvailability(deliveryPointId);
                 }
             },
-            handleInvoiceLinesLoad(filter) {
+            async handleInvoiceLinesLoad(request) {
+                try {
+                    this.loading++;
 
+                    const { data: { value: invoiceLines } } = await this.apiReturns.post('filterInvoiceLines', request);
+
+                    this.invoiceLines = invoiceLines;
+                } catch (error) {
+                    this.$root.handleError(error);
+                } finally {
+                    this.loading--;
+                }
             },
-            handleProductsLoad(searchInput) {
+            async handleProductsLoad(searchInput) {
+                try {
+                    this.productSearch.loading = true;
+
+                    const { data: products } = await this.apiMock.get(
+                        'products',
+                        {
+                            params: {
+                                search: searchInput
+                            }
+                        }
+                    );
+
+                    this.productSearch.items = products.map((product) => ({
+                        ...product,
+                        Id: product.Id.toLowerCase()
+                    }));
+                } catch (error) {
+                    this.$root.handleError(error);
+                } finally {
+                    this.productSearch.loading = false;
+                }
             },
             handleDeliveryPointsSearch(input) {
                 clearTimeout(this.deliveryPointSearch.timeout);
@@ -281,9 +313,18 @@
                         }
                     );
 
-                    this.model.deliveryPointId = DeliveryPointId || null;
+                    if (Lines.some(({ ProductType }) => ProductType === productType.UNDER_WARRANTY.value)) {
+                        this.$root.handleError(new Error('Only a single serviced product may be registered within a single return document.'));
 
-                // TODO
+                        await this.$router.replace({
+                            name: 'Returns',
+                            params: {
+                                companyId: this.$root.companyId
+                            }
+                        });
+                    }
+
+                    this.model.deliveryPointId = DeliveryPointId || null;
                 } catch (error) {
                     if (error.response && error.response.status === 404) {
                         this.$root.handleError(new Error(`Return ${this.returnId} was not found.`));
