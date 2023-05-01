@@ -1,134 +1,132 @@
 <template>
-    <div>
-        <DetailView
+    <DetailView
+        :loading="!!loading"
+        title="Returns">
+        <DetailViewSection
+            :actions="actions"
             :loading="!!loading"
-            title="Returns">
-            <DetailViewSection
-                :actions="actions"
-                :loading="!!loading"
-                title="Return list"
-            >
-                <v-container fluid>
-                    <v-row>
-                        <v-col>
-                            <DateField
-                                :value="filter.from"
-                                @change="handleFilterFromChange"
-                                clearable
-                                label="From"
-                            ></DateField>
-                        </v-col>
+            title="Return list"
+        >
+            <v-container fluid>
+                <v-row>
+                    <v-col>
+                        <DateField
+                            :value="filter.from"
+                            @change="handleFilterFromChange"
+                            clearable
+                            label="From"
+                        ></DateField>
+                    </v-col>
 
-                        <v-col>
-                            <DateField
-                                v-model="filter.to"
-                                :min="filter.from"
-                                @change="handleReload"
-                                clearable
-                                label="To"
-                            ></DateField>
-                        </v-col>
+                    <v-col>
+                        <DateField
+                            v-model="filter.to"
+                            :min="filter.from"
+                            @change="handleReload"
+                            clearable
+                            label="To"
+                        ></DateField>
+                    </v-col>
 
-                        <v-col>
-                            <SelectField
-                                v-model="filter.state"
-                                :items="states"
-                                @change="handleReload"
-                                clearable
-                                item-text="label"
-                                item-value="value"
-                                label="State"
-                            ></SelectField>
-                        </v-col>
+                    <v-col>
+                        <SelectField
+                            v-model="filter.state"
+                            :items="states"
+                            @change="handleReload"
+                            clearable
+                            item-text="label"
+                            item-value="value"
+                            label="State"
+                        ></SelectField>
+                    </v-col>
 
-                        <v-col>
-                            <TextField
-                                :value="filter.search"
-                                @input="handleFilterSearchInput"
-                                clearable
-                                label="Search"
-                            ></TextField>
-                        </v-col>
-                    </v-row>
+                    <v-col>
+                        <TextField
+                            :value="filter.search"
+                            @input="handleFilterSearchInput"
+                            clearable
+                            label="Search"
+                        ></TextField>
+                    </v-col>
+                </v-row>
 
-                    <v-row>
-                        <v-col>
-                            <v-data-table
-                                :headers="table.headers"
-                                :items="tableItems"
-                                :items-per-page.sync="table.pageSize"
-                                :loading="!!loading"
-                                :page.sync="table.page"
-                                :server-items-length="table.serverItemsLength"
-                                :sort-by.sync="table.sortBy"
-                                :sort-desc.sync="table.sortDesc"
-                                @update:items-per-page="load"
-                                @update:page="load"
-                                @update:sort-by="load"
-                                @update:sort-desc="load"
-                            >
-                                <template #item.Id="{ item: { Id } }">
-                                    <router-link :to="{ name: 'Return', params: { returnId: Id } }">
-                                        {{ Id }}
-                                    </router-link>
-                                </template>
+                <v-row>
+                    <v-col>
+                        <v-data-table
+                            :headers="table.headers"
+                            :items="tableItems"
+                            :items-per-page.sync="table.pageSize"
+                            :loading="!!loading"
+                            :page.sync="table.page"
+                            :server-items-length="table.serverItemsLength"
+                            :sort-by.sync="table.sortBy"
+                            :sort-desc.sync="table.sortDesc"
+                            @update:items-per-page="load"
+                            @update:page="load"
+                            @update:sort-by="load"
+                            @update:sort-desc="load"
+                        >
+                            <template #item.Id="{ item: { Id } }">
+                                <router-link :to="{ name: 'Return', params: { returnId: Id } }">
+                                    {{ Id }}
+                                </router-link>
+                            </template>
 
-                                <template #item.Number="{ item: { Id , Number } }">
-                                    <router-link :to="{ name: 'Return', params: { returnId: Id } }">
-                                        {{ Number }}
-                                    </router-link>
-                                </template>
+                            <template #item.Number="{ item: { Id , Number } }">
+                                <router-link :to="{ name: 'Return', params: { returnId: Id } }">
+                                    {{ Number }}
+                                </router-link>
+                            </template>
 
-                                <!-- CustomerId -->
+                            <!-- CustomerId -->
 
-                                <!-- DeliveryPointId -->
+                            <!-- DeliveryPointId -->
 
-                                <!-- LabelCount -->
+                            <!-- LabelCount -->
 
-                                <template #item.Fees="{ item }">
-                                    <div
-                                        v-show="!!item.feeTotal"
-                                        class="text-no-wrap"
-                                    >
-                                        <span>{{ item.feeTotal | numberFormat(2) }} €</span>
+                            <template #item.Fees="{ item }">
+                                <div
+                                    v-show="!!item.feeTotal"
+                                    class="text-no-wrap"
+                                >
+                                    <span>{{ item.feeTotal | numberFormat(2) }} €</span>
 
-                                        <v-tooltip right>
-                                            <template #activator="{ on }">
-                                                <v-icon
-                                                    v-on="on"
-                                                    class="vertical-align-text-bottom"
-                                                    dense
-                                                >
-                                                    info_outline
-                                                </v-icon>
-                                            </template>
+                                    <v-tooltip right>
+                                        <template #activator="{ on }">
+                                            <v-icon
+                                                v-on="on"
+                                                class="vertical-align-text-bottom"
+                                                dense
+                                            >
+                                                info_outline
+                                            </v-icon>
+                                        </template>
 
-                                            <template>
-                                                <div
-                                                    v-for="(fee, index) in item.Fees"
-                                                    :key="index"
-                                                >
-                                                    {{ fee.Name }}: {{ fee.Value | numberFormat(2) }} €
-                                                </div>
-                                            </template>
-                                        </v-tooltip>
-                                    </div>
-                                </template>
+                                        <template>
+                                            <div
+                                                v-for="(fee, index) in item.Fees"
+                                                :key="index"
+                                            >
+                                                {{ fee.Name }}: {{ fee.Value | numberFormat(2) }} €
+                                            </div>
+                                        </template>
+                                    </v-tooltip>
+                                </div>
+                            </template>
 
-                                <!-- State -->
+                            <!-- State -->
 
-                                <template #item.Created="{ item: { Created } }">
-                                    {{ Created | dateTimeFormat('yyyy-MM-dd') }}
-                                </template>
+                            <template #item.Created="{ item: { Created } }">
+                                {{ Created | dateTimeFormat('yyyy-MM-dd') }}
+                            </template>
 
-                                <!-- UserCreated -->
-                            </v-data-table>
-                        </v-col>
-                    </v-row>
-                </v-container>
-            </DetailViewSection>
-        </DetailView>
-    </div>
+                            <!-- UserCreated -->
+                        </v-data-table>
+                    </v-col>
+                </v-row>
+            </v-container>
+        </DetailViewSection>
+    </DetailView>
 </template>
 
 <script>
@@ -161,6 +159,7 @@
                         route: { name: 'ReturnRegistration' }
                     }
                 ],
+                apiMock: null,
                 apiReturns: null,
                 feeConfigurationGroups: [],
                 filter: {
@@ -219,7 +218,7 @@
                         },
                         {
                             align: 'center',
-                            text: 'User',
+                            text: 'Created by',
                             value: 'UserCreated'
                         }
                     ],
@@ -313,6 +312,8 @@
             }
         },
         async created() {
+            this.apiMock = createAxios(apiType.MOCK);
+
             this.apiReturns = createAxios(apiType.RETURNS, this.$root.companyId);
 
             await this.loadFeeConfigurationGroups();

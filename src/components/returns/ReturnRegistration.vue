@@ -281,7 +281,7 @@
                     this.loading++;
 
                     const { data: { Id } } = await this.apiReturns.post(
-                        'returns',
+                        this.returnId ? `returns(${this.returnId})/lines` : 'returns',
                         {
                             DeliveryPointId: this.model.deliveryPointId,
                             LabelCount: this.model.labelCount,

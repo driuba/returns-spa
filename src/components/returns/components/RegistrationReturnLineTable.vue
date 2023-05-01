@@ -51,7 +51,9 @@
                             v-show="!!this.feesReturn.length"
                             dense
                         >
-                            <v-subheader>Preliminary fees:</v-subheader>
+                            <v-list-item>
+                                <v-list-item-title>Preliminary fees</v-list-item-title>
+                            </v-list-item>
 
                             <v-list-item
                                 v-for="(fee, index) in feesReturn"
@@ -149,7 +151,7 @@
                             </template>
 
                             <template #item.ProductName="{ item: { ProductName } }">
-                                <td class="text-center text-truncate">
+                                <td class="text-center">
                                     <v-tooltip top>
                                         <template #activator="{ on }">
                                             <span
@@ -174,7 +176,7 @@
                             <!-- Quantity -->
 
                             <template #item.Note="{ item: { Note } }">
-                                <td class="text-center text-truncate">
+                                <td class="text-center">
                                     <v-tooltip top>
                                         <template #activator="{ on }">
                                             <span
