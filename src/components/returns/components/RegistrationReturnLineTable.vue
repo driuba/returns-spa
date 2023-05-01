@@ -246,7 +246,7 @@
                                 >
                                     <span>{{ feeTotalReturnLine[Reference] | numberFormat(2) }} €</span>
 
-                                    <v-tooltip top>
+                                    <v-tooltip right>
                                         <template #activator="{ on }">
                                             <v-icon
                                                 v-on="on"

@@ -281,31 +281,29 @@
             handleCustomerSearch(searchInput) {
                 clearTimeout(this.dialog.model.CustomerId.searchTimeout);
 
-                if (searchInput && searchInput.length > 2) {
-                    this.dialog.model.CustomerId.searchTimeout = setTimeout(
-                        () => {
-                            if (searchInput && searchInput.length > 2 && this.dialog.model.CustomerId.searchInput !== searchInput) {
-                                this.dialog.model.CustomerId.searchInput = searchInput;
-                                this.dialog.model.CustomerId.loading = true;
+                this.dialog.model.CustomerId.searchTimeout = setTimeout(
+                    () => {
+                        if (searchInput && searchInput.length > 2 && this.dialog.model.CustomerId.searchInput !== searchInput) {
+                            this.dialog.model.CustomerId.searchInput = searchInput;
+                            this.dialog.model.CustomerId.loading = true;
 
-                                this.loadCustomers(
-                                    {
-                                        parent: true,
-                                        search: searchInput
-                                    },
-                                    (customers) => {
-                                        if (customers) {
-                                            this.dialog.model.CustomerId.items = customers;
-                                        }
-
-                                        this.dialog.model.CustomerId.loading = false;
+                            this.loadCustomers(
+                                {
+                                    parent: true,
+                                    search: searchInput
+                                },
+                                (customers) => {
+                                    if (customers) {
+                                        this.dialog.model.CustomerId.items = customers;
                                     }
-                                );
-                            }
-                        },
-                        500
-                    );
-                }
+
+                                    this.dialog.model.CustomerId.loading = false;
+                                }
+                            );
+                        }
+                    },
+                    500
+                );
             },
             handleDelete(id, callback) {
                 this.callback = callback;

@@ -20,3 +20,26 @@ export const productType = {
         value: 'UnderWarranty'
     }
 };
+
+export const state = {
+    DECLINED: {
+        label: 'Declined',
+        order: 20,
+        value: 'Declined'
+    },
+    INVOICED: {
+        label: 'Invoiced',
+        order: 30,
+        value: 'Invoiced'
+    },
+    NEW: {
+        label: 'New',
+        order: 0,
+        value: 'New'
+    },
+    REGISTERED: {
+        label: 'Registered',
+        order: 10,
+        value: 'Registered'
+    }
+};
