@@ -38,6 +38,7 @@
                     <v-col>
                         <NumberField
                             :min="0"
+                            :readonly="labelCountDisabled"
                             :rules="labelCountRules"
                             :value="labelCount"
                             @change="handleLabelCountChange"
@@ -359,6 +360,10 @@
             labelCount: {
                 required: true,
                 type: Number
+            },
+            labelCountDisabled: {
+                default: false,
+                type: Boolean
             },
             loading: {
                 default: false,

@@ -12,7 +12,7 @@
 
         <DetailView
             :loading="!!loading"
-            title="Register return"
+            title="Return products"
         >
             <v-tabs
                 v-model="tabSelected"
@@ -26,7 +26,7 @@
                     Delivery point
                 </v-tab>
 
-                <v-tab :disabled="!model.deliveryPointId">
+                <v-tab :disabled="!(model.deliveryPointId && model.productType)">
                     Invoice lines
                 </v-tab>
 
@@ -77,6 +77,7 @@
                             :estimated="model.estimated"
                             :feeConfigurationGroups="feeConfigurationGroups"
                             :labelCount.sync="model.labelCount"
+                            :labelCountDisabled="!!returnId"
                             :loading="!!loading"
                             :returnEstimated="returnEstimated"
                             @estimate="handleEstimate"
@@ -280,31 +281,57 @@
                 try {
                     this.loading++;
 
-                    const { data: { Id } } = await this.apiReturns.post(
-                        this.returnId ? `returns(${this.returnId})/lines` : 'returns',
-                        {
-                            DeliveryPointId: this.model.deliveryPointId,
-                            LabelCount: this.model.labelCount,
-                            Lines: this.model.returnLines.map((returnLine) => ({
-                                FeeConfigurationGroupIdDamagePackage: returnLine.FeeConfigurationGroupIdDamagePackage,
-                                FeeConfigurationGroupIdDamageProduct: returnLine.FeeConfigurationGroupIdDamageProduct,
-                                InvoiceNumber: returnLine.InvoiceNumber,
-                                Note: returnLine.Note,
-                                ProductId: returnLine.ProductId,
-                                ProductType: returnLine.ProductType,
-                                Quantity: returnLine.Quantity,
-                                Reference: returnLine.Reference,
-                                SerialNumber: returnLine.SerialNumber
-                            }))
-                        }
-                    );
+                    if (this.returnId) {
+                        await this.apiReturns.post(
+                            `returns(${this.returnId})/lines`,
+                            {
+                                Lines: this.model.returnLines.map((returnLine) => ({
+                                    FeeConfigurationGroupIdDamagePackage: returnLine.FeeConfigurationGroupIdDamagePackage,
+                                    FeeConfigurationGroupIdDamageProduct: returnLine.FeeConfigurationGroupIdDamageProduct,
+                                    InvoiceNumber: returnLine.InvoiceNumber,
+                                    Note: returnLine.Note,
+                                    ProductId: returnLine.ProductId,
+                                    ProductType: returnLine.ProductType,
+                                    Quantity: returnLine.Quantity,
+                                    Reference: returnLine.Reference,
+                                    SerialNumber: returnLine.SerialNumber
+                                }))
+                            }
+                        );
 
-                    await this.$router.push({
-                        name: 'Return',
-                        params: {
-                            returnId: Id
-                        }
-                    });
+                        await this.$router.push({
+                            name: 'Return',
+                            params: {
+                                returnId: this.returnId
+                            }
+                        });
+                    } else {
+                        const { data: { Id } } = await this.apiReturns.post(
+                            'returns',
+                            {
+                                DeliveryPointId: this.model.deliveryPointId,
+                                LabelCount: this.model.labelCount,
+                                Lines: this.model.returnLines.map((returnLine) => ({
+                                    FeeConfigurationGroupIdDamagePackage: returnLine.FeeConfigurationGroupIdDamagePackage,
+                                    FeeConfigurationGroupIdDamageProduct: returnLine.FeeConfigurationGroupIdDamageProduct,
+                                    InvoiceNumber: returnLine.InvoiceNumber,
+                                    Note: returnLine.Note,
+                                    ProductId: returnLine.ProductId,
+                                    ProductType: returnLine.ProductType,
+                                    Quantity: returnLine.Quantity,
+                                    Reference: returnLine.Reference,
+                                    SerialNumber: returnLine.SerialNumber
+                                }))
+                            }
+                        );
+
+                        await this.$router.push({
+                            name: 'Return',
+                            params: {
+                                returnId: Id
+                            }
+                        });
+                    }
                 } catch (error) {
                     this.$root.handleError(error);
                 } finally {
@@ -436,12 +463,12 @@
                 try {
                     this.loading++;
 
-                    const { data: { DeliveryPointId, Lines } } = await this.apiReturns.get(
+                    const { data: { DeliveryPointId, LabelCount, Lines } } = await this.apiReturns.get(
                         `returns(${this.returnId})`,
                         {
                             params: {
                                 $expand: 'Lines($select=ProductType)',
-                                $select: 'DeliveryPointId,Lines'
+                                $select: 'DeliveryPointId,LabelCount,Lines'
                             }
                         }
                     );
@@ -452,7 +479,10 @@
                         await this.$router.replace({ name: 'Returns' });
                     }
 
-                    this.model.deliveryPointId = DeliveryPointId || null;
+                    this.model.deliveryPointId = DeliveryPointId;
+                    this.model.labelCount = LabelCount;
+
+                    this.deliveryPointSearch.items = await this.loadDeliveryPoints(DeliveryPointId);
                 } catch (error) {
                     if (error.response && error.response.status === 404) {
                         this.$root.handleError(new Error(`Return ${this.returnId} was not found.`));

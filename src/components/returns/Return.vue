@@ -15,6 +15,29 @@
             @confirm="handleReturnLineEditConfirm"
         ></ReturnLineDialog>
 
+        <Dialog
+            :actions="dialogDecline.actions"
+            :visible="dialogDecline.visible"
+            max-width="460"
+            persistent
+            title="Reason"
+        >
+            <v-form ref="formDecline">
+                <v-container fluid>
+                    <v-row>
+                        <v-col>
+                            <TextAreaField
+                                v-model="dialogDecline.note"
+                                :rules="dialogDecline.noteRules"
+                                counter
+                                label="Note"
+                            ></TextAreaField>
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </v-form>
+        </Dialog>
+
         <DetailView
             :actions="actionsReturn"
             :loading="!!loading"
@@ -45,7 +68,7 @@
                                     <v-list-item-content>
                                         <v-list-item-title>State</v-list-item-title>
 
-                                        {{ returnEntry && returnEntry.State }}
+                                        {{ returnEntry && stateLabels[returnEntry.State] }}
                                     </v-list-item-content>
                                 </v-list-item>
 
@@ -119,6 +142,7 @@
             </DetailViewSection>
 
             <DetailViewSection
+                :actions="actionsReturnLine"
                 :loading="!!loading"
                 title="Return lines"
             >
@@ -130,14 +154,27 @@
                                 :items="tableItems"
                                 :items-per-page="-1"
                                 :loading="!!loading"
+                                :show-select="!!(returnEntry && returnEntry.State === state.REGISTERED.value)"
                                 disable-pagination
                                 disable-sort
                                 hide-default-footer
-                                show-select
                             >
-                                <!-- data-table-select -->
+                                <template #header.data-table-select>
+                                    <v-simple-checkbox
+                                        :value="tableHeaderSelected"
+                                        @input="handleTableHeaderSelect"
+                                        color="primary"
+                                    />
+                                </template>
 
-                                <!-- data-table-select -->
+                                <template #item.data-table-select="{ item }">
+                                    <v-simple-checkbox
+                                        :disabled="item.State !== lineState.REGISTERED.value"
+                                        :value="returnLineIdsSelected.includes(item.Id)"
+                                        @input="handleReturnLineSelect(item)"
+                                        color="primary"
+                                    />
+                                </template>
 
                                 <!-- Id -->
 
@@ -252,6 +289,7 @@
                                         <template #activator="{ on }">
                                             <v-btn
                                                 v-on="on"
+                                                v-show="returnEntry && returnEntry.State === state.NEW.value"
                                                 :loading="!!loading"
                                                 @click="handleReturnLineEdit(item)"
                                                 color="primary"
@@ -269,6 +307,7 @@
                                         <template #activator="{ on }">
                                             <v-btn
                                                 v-on="on"
+                                                v-show="returnEntry && returnEntry.State === state.NEW.value"
                                                 :loading="!!loading"
                                                 @click="handleReturnLineRemove(item)"
                                                 color="primary"
@@ -294,17 +333,18 @@
 <script>
     import { createAxios, type as apiType } from '@/api';
     import { DetailView, DetailViewSection } from '@/components/detailViews';
-    import { DialogConfirmation } from '@/components/dialogs';
-    import { NumberField } from '@/components/inputs';
-    import { type as feeConfigurationGroupType } from '@/enums/feeConfigurationGroup'
-    import { productType, state } from '@/enums/return';
-    import { ReturnLineDialog } from './components';
+    import { Dialog, DialogConfirmation } from '@/components/dialogs';
+    import { NumberField, TextAreaField } from '@/components/inputs';
+    import { type as feeConfigurationGroupType } from '@/enums/feeConfigurationGroup';
+    import { lineState, productType, state } from '@/enums/return';
+    import role from '@/enums/role';
     import { formatters } from '@/mixins';
     import { mapGetters } from 'vuex';
+    import { ReturnLineDialog } from './components';
 
-    export default  {
+    export default {
         name: 'Return',
-        components: { DetailView, DetailViewSection, DialogConfirmation, NumberField, ReturnLineDialog },
+        components: { Dialog, TextAreaField, DetailView, DetailViewSection, DialogConfirmation, NumberField, ReturnLineDialog },
         mixins: [formatters],
         data() {
             return {
@@ -316,6 +356,24 @@
                     message: null,
                     visible: false
                 },
+                dialogDecline: {
+                    actions: [
+                        {
+                            handleClick: this.handleReturnLinesDeclineCancel,
+                            label: 'Cancel'
+                        },
+                        {
+                            handleClick: this.handleReturnLinesDeclineConfirm,
+                            label: 'Confirm'
+                        }
+                    ],
+                    note: null,
+                    noteRules: [
+                        this.validateDeclineNoteLength,
+                        this.validateDeclineNoteRequired
+                    ],
+                    visible: false
+                },
                 feeConfigurationGroups: [],
                 loading: 0,
                 labelCount: null,
@@ -324,6 +382,7 @@
                     this.validateLabelCountMin
                 ],
                 returnEntry: null,
+                returnLineIdsSelected: [],
                 returnLineToEdit: null
             };
         },
@@ -338,13 +397,51 @@
                 return [
                     {
                         handleClick: this.handleApprove,
-                        hidden: !this.returnEntry || this.returnEntry.State !== state.NEW.value,
+                        hidden: !(this.returnEntry && this.returnEntry.State === state.NEW.value),
                         label: 'Approve'
                     },
                     {
                         handleClick: this.handleDelete,
-                        hidden: !this.returnEntry || this.returnEntry.State !== state.NEW.value,
+                        hidden: !(this.returnEntry && this.returnEntry.State === state.NEW.value),
                         label: 'Delete'
+                    }
+                ];
+            },
+            actionsReturnLine() {
+                return [
+                    {
+                        disabled: !this.returnLineIdsSelected.length,
+                        handleClick: this.handleReturnLinesInvoice,
+                        hidden: !(
+                            this.returnEntry &&
+                            this.returnEntry.Lines.some((line) => line.State === lineState.REGISTERED.value) &&
+                            this.userRoles.has(role.ADMIN)
+                        ),
+                        label: 'Invoice'
+                    },
+                    {
+                        disabled: !this.returnLineIdsSelected.length,
+                        handleClick: this.handleReturnLinesDecline,
+                        hidden: !(
+                            this.returnEntry &&
+                            this.returnEntry.Lines.some((line) => line.State === lineState.REGISTERED.value) &&
+                            this.userRoles.has(role.ADMIN)
+                        ),
+                        label: 'Decline'
+                    },
+                    {
+                        hidden: !(
+                            this.returnEntry &&
+                            this.returnEntry.State === state.NEW.value &&
+                            this.returnEntry.Lines.every((line) => line.ProductType !== productType.SERVICED.value)
+                        ),
+                        label: 'Add products',
+                        route: {
+                            name: 'ReturnRegistration',
+                            params: {
+                                returnId: this.returnEntry && this.returnEntry.Id
+                            }
+                        }
                     }
                 ];
             },
@@ -386,6 +483,9 @@
             feeTotalReturn() {
                 return this.feesReturn.reduce((accumulator, { Value }) => accumulator + Value, 0);
             },
+            lineState() {
+                return lineState;
+            },
             productTypeLabels() {
                 return Object
                     .values(productType)
@@ -404,6 +504,17 @@
             },
             state() {
                 return state;
+            },
+            stateLabels() {
+                return Object
+                    .values(state)
+                    .reduce(
+                        (accumulator, state) => ({
+                            ...accumulator,
+                            [state.value]: state.label
+                        }),
+                        {}
+                    );
             },
             tableHeaders() {
                 const headers = [
@@ -480,6 +591,16 @@
 
                 return headers.filter((header) => !header.hidden);
             },
+            tableHeaderSelected() {
+                return (
+                    this.returnEntry &&
+                    this.returnEntry.Lines.some((line) => line.State === lineState.REGISTERED.value) &&
+                    this.returnEntry.Lines.every((line) =>
+                        line.State !== lineState.REGISTERED.value ||
+                        this.returnLineIdsSelected.includes(line.Id)
+                    )
+                );
+            },
             tableItems() {
                 return (
                     (
@@ -511,6 +632,11 @@
                     ) ||
                     []
                 );
+            },
+            userRoles() {
+                const roles = (this.user && this.user.roles) || [];
+
+                return new Set(Array.isArray(roles) ? roles : [roles]);
             }
         },
         async created() {
@@ -589,8 +715,8 @@
                     }
                 }
             },
-            handleReturnLineAttachments(returnLine) {
-                // TODO
+            handleReturnLineAttachments() {
+            // TODO
             },
             handleReturnLineEdit(returnLine) {
                 this.returnLineToEdit = {
@@ -659,6 +785,79 @@
                 this.dialogConfirmation.message = 'Are you sure you want to delete the return line, this operation is not reversible?';
                 this.dialogConfirmation.visible = true;
             },
+            handleReturnLinesDecline() {
+                this.dialogDecline.visible = true;
+            },
+            handleReturnLinesDeclineCancel() {
+                this.dialogDecline.note = null;
+                this.dialogDecline.visible = false;
+            },
+            async handleReturnLinesDeclineConfirm() {
+                if (this.$refs.formDecline.validate()) {
+                    try {
+                        this.loading++;
+
+                        await this.apiReturns.post(
+                            `returns(${this.returnEntry.Id})/lines/decline`,
+                            {
+                                Ids: this.returnLineIdsSelected,
+                                Note: this.dialogDecline.note
+                            }
+                        );
+
+                        this.dialogDecline.note = null;
+                        this.dialogDecline.visible = false;
+                        this.returnLineIdsSelected = [];
+
+                        await this.load();
+                    } catch (error) {
+                        this.$root.handleError(error);
+                    } finally {
+                        this.loading--;
+                    }
+                }
+            },
+            handleReturnLinesInvoice() {
+                this.dialogConfirmation.handler = async () => {
+                    try {
+                        this.loading++;
+
+                        await this.apiReturns.post(
+                            `returns(${this.returnEntry.Id})/lines/invoice`,
+                            {
+                                Ids: this.returnLineIdsSelected
+                            }
+                        );
+
+                        this.returnLineIdsSelected = [];
+
+                        await this.load();
+                    } catch (error) {
+                        this.$root.handleError(error);
+                    } finally {
+                        this.loading--;
+                    }
+                };
+                this.dialogConfirmation.message = 'Are you sure you want to decline selected return lines, this operation is not reversible?';
+                this.dialogConfirmation.visible = true;
+
+            },
+            handleReturnLineSelect(returnLine) {
+                if (this.returnLineIdsSelected.includes(returnLine.Id)) {
+                    this.returnLineIdsSelected = this.returnLineIdsSelected.filter((id) => id !== returnLine.Id);
+                } else {
+                    this.returnLineIdsSelected.push(returnLine.Id);
+                }
+            },
+            handleTableHeaderSelect() {
+                if (this.tableHeaderSelected) {
+                    this.returnLineIdsSelected = [];
+                } else {
+                    this.returnLineIdsSelected = this.returnEntry.Lines
+                        .filter((line) => line.State === lineState.REGISTERED.value)
+                        .map((line) => line.Id);
+                }
+            },
             async load() {
                 const redirect = async () => {
                     await this.$router.replace({
@@ -717,6 +916,19 @@
                 } finally {
                     this.loading--;
                 }
+            },
+            validateDeclineNoteLength(note) {
+                return (
+                    !note ||
+                    note.length <= 500 ||
+                    'Reason note length must be less than or equal to 500 characters'
+                );
+            },
+            validateDeclineNoteRequired(note) {
+                return (
+                    !!note ||
+                    'Reason note is required'
+                );
             },
             validateLabelCountInteger(labelCount) {
                 return (

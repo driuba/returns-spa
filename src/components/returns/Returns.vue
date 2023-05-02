@@ -114,7 +114,9 @@
                                 </div>
                             </template>
 
-                            <!-- State -->
+                            <template #item.State="{ item: { State } }">
+                                {{ stateLabels[State] }}
+                            </template>
 
                             <template #item.Created="{ item: { Created } }">
                                 {{ Created | dateTimeFormat('yyyy-MM-dd') }}
@@ -278,6 +280,17 @@
                 }
 
                 return query;
+            },
+            stateLabels() {
+                return Object
+                    .values(state)
+                    .reduce(
+                        (accumulator, state) => ({
+                            ...accumulator,
+                            [state.value]: state.label
+                        }),
+                        {}
+                    );
             },
             states() {
                 return Object

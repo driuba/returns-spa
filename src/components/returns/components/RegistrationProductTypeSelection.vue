@@ -7,13 +7,13 @@
             <v-row>
                 <v-col>
                     <v-radio-group
-                        :disabled="disabled"
                         :rules="rules"
                         :value="productType"
                         @change="handleChange"
                         column>
                         <v-radio
                             v-for="type in productTypes"
+                            :disabled="disabled && type.value === productType.SERVICED.value"
                             :key="type.value"
                             :label="type.label"
                             :value="type.value"
@@ -34,8 +34,8 @@
         name: 'ProductTypeSelection',
         components: { DetailViewSection },
         model: {
-            event: 'update:productType',
-            prop: 'productType'
+            event: 'update:productTypeSelected',
+            prop: 'productTypeSelected'
         },
         props: {
             disabled: {
@@ -46,7 +46,7 @@
                 default: false,
                 type: Boolean
             },
-            productType: {
+            productTypeSelected: {
                 type: String
             }
         },
@@ -56,13 +56,16 @@
             };
         },
         computed: {
+            productType() {
+                return productType;
+            },
             productTypes() {
                 return Object.values(productType);
             }
         },
         methods: {
             handleChange(productType) {
-                this.$emit('update:productType', productType);
+                this.$emit('update:productTypeSelected', productType);
             }
         }
     };

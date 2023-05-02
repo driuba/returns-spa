@@ -1,3 +1,26 @@
+export const lineState = {
+    DECLINED: {
+        label: 'Declined',
+        order: 20,
+        value: 'Declined'
+    },
+    INVOICED: {
+        label: 'Invoiced',
+        order: 30,
+        value: 'Invoiced'
+    },
+    NEW: {
+        label: 'New',
+        order: 0,
+        value: 'New'
+    },
+    REGISTERED: {
+        label: 'Registered',
+        order: 10,
+        value: 'Registered'
+    }
+};
+
 export const productType = {
     DEFECTIVE: {
         label: 'Defective',
@@ -31,6 +54,11 @@ export const state = {
         label: 'Invoiced',
         order: 30,
         value: 'Invoiced'
+    },
+    INVOICED_PARTIALLY: {
+        label: 'Partially invoiced',
+        order: 25,
+        value: 'InvoicedPartially'
     },
     NEW: {
         label: 'New',
