@@ -106,7 +106,7 @@
 
                                 <template>
                                     <div v-if="item.ByOrderOnly">Product was purchased by order and cannot be returned</div>
-                                    <div v-if="item.Serviceable">Product must be serviced and cannot be returned under warranty</div>
+                                    <div v-if="item.Serviceable && productTypeSelected === productType.UNDER_WARRANTY.value">Product must be serviced and cannot be returned under warranty</div>
                                     <div v-if="item.quantityAvailable <= 0">Invoice product is not available for return</div>
                                 </template>
                             </v-tooltip>

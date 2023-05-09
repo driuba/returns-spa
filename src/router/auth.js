@@ -1,4 +1,5 @@
 import { type } from '@/enums/message';
+import role from '@/enums/role';
 import app from '@/main';
 
 export function oidcAuthorize(store, vuexNamespace) {
@@ -13,16 +14,25 @@ export function oidcAuthorize(store, vuexNamespace) {
 
                     if (!isAuthenticated) {
                         authorize = to.meta && to.meta.isPublic;
-                    } else if (!to.meta || to.meta.isPublic || !to.meta.roles) {
-                        authorize = true;
                     } else {
                         const user = store.getters['oidcStore/oidcUser'];
 
-                        let roles = (user && user.roles) || [];
+                        let rolesUser = (user && user.roles) || [];
 
-                        roles = new Set(Array.isArray(roles) ? roles : [roles]);
+                        rolesUser = Array.isArray(rolesUser) ? rolesUser : [rolesUser];
 
-                        authorize = to.meta.roles.some((role) => roles.has(role));
+                        rolesUser = new Set(
+                            rolesUser.filter((roleUser) => (
+                                roleUser === role.ADMIN ||
+                                roleUser === role.RESELLER
+                            ))
+                        );
+
+                        if (!to.meta || to.meta.isPublic || !to.meta.roles) {
+                            authorize = rolesUser.size;
+                        } else {
+                            authorize = to.meta.roles.some((rolePath) => rolesUser.has(rolePath));
+                        }
                     }
 
                     if (authorize) {

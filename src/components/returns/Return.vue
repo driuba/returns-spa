@@ -673,7 +673,7 @@
 
                         await this.apiReturns.delete(`returns(${this.returnEntry.Id})`);
 
-                        await this.$router.push({ name: 'Reutrns' });
+                        await this.$router.push({ name: 'Returns' });
                     } catch (error) {
                         this.$root.handleError(error);
                     } finally {
