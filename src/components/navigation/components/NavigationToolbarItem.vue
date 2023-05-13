@@ -3,6 +3,7 @@
         :ripple="false"
         :to="route"
         @click.stop
+        class="justify-start"
         exact-path
     >
         <v-list-item-action class="toolbar-item-action">

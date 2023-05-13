@@ -14,6 +14,7 @@
             <v-list-item
                 v-if="isAuthenticated"
                 :ripple="false"
+                class="justify-start user-avatar"
             >
                 <v-tooltip bottom>
                     <span>Signed in as: {{ user.name }}, Company: {{ companyId }}</span>
@@ -21,7 +22,7 @@
                     <template #activator="{ on }">
                         <v-list-item-avatar
                             v-on="on"
-                            class="toolbar-item-avatar justify-center"
+                            class="toolbar-item-avatar"
                             color="#cccccc"
                         >
                             <span class="white--text headline">{{ user.name.charAt(0) }}</span>
@@ -47,6 +48,7 @@
                 v-else
                 :ripple="false"
                 @click.stop="authenticate"
+                class="justify-start"
             >
                 <v-list-item-action class="toolbar-item-action">
                     <v-icon>lock</v-icon>
@@ -200,26 +202,31 @@
     };
 </script>
 
-<style>
+<style lang="scss">
     .toolbar {
         -ms-overflow-style: none;
         overflow-y: auto;
         padding-top: 8px;
         scrollbar-width: none;
-    }
 
-    .toolbar::-webkit-scrollbar {
-        display: none;
+        &::-webkit-scrollbar {
+            display: none;
+        }
+
+        .user-avatar {
+            min-height: 60px;
+        }
     }
 
     .toolbar-item-action,
     .toolbar-item-avatar {
         justify-content: center;
+        margin-left: 5px !important;
         min-width: 40px;
         width: 40px;
     }
 
     .toolbar-item-title {
-        margin-left: 8px;
+        margin-left: 0;
     }
 </style>
