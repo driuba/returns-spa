@@ -76,6 +76,7 @@
                         :server-items-length="serverItemsLength"
                         @update:items-per-page="handleReload"
                         @update:page="load"
+                        disable-sort
                         show-select
                     >
                         <template #header.data-table-select>
