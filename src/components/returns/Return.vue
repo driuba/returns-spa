@@ -66,6 +66,22 @@
                             <v-list dense>
                                 <v-list-item>
                                     <v-list-item-content>
+                                        <v-list-item-title>Customer</v-list-item-title>
+
+                                        {{ returnEntry && returnEntry.CustomerId }}
+                                    </v-list-item-content>
+                                </v-list-item>
+
+                                <v-list-item>
+                                    <v-list-item-content>
+                                        <v-list-item-title>Delivery point</v-list-item-title>
+
+                                        {{ returnEntry && returnEntry.DeliveryPointId }}
+                                    </v-list-item-content>
+                                </v-list-item>
+
+                                <v-list-item>
+                                    <v-list-item-content>
                                         <v-list-item-title>State</v-list-item-title>
 
                                         {{ returnEntry && stateLabels[returnEntry.State] }}
